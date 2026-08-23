@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Farm Watchman Control - Enhanced</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        body {
+            background-color: #0f172a;
+            color: #f8fafc;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .card {
+            background-color: #1e293b;
+            border-radius: 20px;
+            padding: 30px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            border: 1px solid #334155;
+        }
+
+        .header {
+            margin-bottom: 25px;
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            color: #f1f5f9;
+            margin-bottom: 6px;
+        }
+
+        .header p {
+            font-size: 0.875rem;
+            color: #94a3b8;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 50px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 35px;
+            transition: all 0.3s ease;
+        }
+
+        .status-badge.off {
+            background-color: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .status-badge.on {
+            background-color: rgba(34, 197, 94, 0.15);
+            color: #22c55e;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: currentColor;
+            animation: pulse 2s infinite;
+        }
+
+        .status-badge.off .dot {
+            animation: none;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .status-badge.on .dot {
+            box-shadow: 0 0 8px currentColor;
+        }
+
+        /* Power Toggle Button - MEDIUM SIZE */
+        .power-btn {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            outline: none;
+            margin: 0 auto 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #334155;
+            color: #64748b;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.4), 0 4px 10px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
+        }
+
+        .power-btn:hover {
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.4), 0 6px 15px rgba(0,0,0,0.4);
+        }
+
+        .power-btn:active {
+            transform: scale(0.95);
+        }
+
+        .power-btn svg {
+            width: 40px;
+            height: 40px;
+            stroke-width: 2.5;
+            transition: all 0.3s ease;
+        }
+
+        .power-btn.active {
+            background-color: #22c55e;
+            color: #ffffff;
+            box-shadow: 0 0 25px rgba(34, 197, 94, 0.5);
+        }
+
+        .power-btn.active:hover {
+            box-shadow: 0 0 35px rgba(34, 197, 94, 0.7);
+        }
+
+        .power-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* Status Info */
+        .status-info {
+            background-color: rgba(51, 65, 85, 0.5);
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 20px;
+            font-size: 0.875rem;
+            color: #cbd5e1;
+            border: 1px solid #475569;
+        }
+
+        .status-info strong {
+            color: #f1f5f9;
+        }
+
+        /* Logs */
+        .logs {
+            background-color: #0f172a;
+            border-radius: 10px;
+            padding: 12px;
+            font-family: monospace;
+            font-size: 0.75rem;
+            color: #64748b;
+            text-align: left;
+            border: 1px solid #1e293b;
+            max-height: 120px;
+            overflow-y: auto;
+        }
+
+        .log-entry {
+            margin-bottom: 4px;
+            line-height: 1.4;
+        }
+
+        .log-entry.success {
+            color: #22c55e;
+        }
+
+        .log-entry.error {
+            color: #ef4444;
+        }
+
+        .log-entry.info {
+            color: #3b82f6;
+        }
+
+        /* Error Message */
+        .error-message {
+            background-color: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 0.875rem;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        /* Loading spinner */
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .spinner {
+            display: inline-block;
+            animation: spin 1s linear infinite;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <div class="header">
+            <h1>Farm Watchman</h1>
+            <p>Automated Perimeter Control</p>
+        </div>
+
+        <div id="statusBadge" class="status-badge off" role="status" aria-live="polite">
+            <span class="dot"></span>
+            <span id="statusText">SYSTEM STANDBY</span>
+        </div>
+
+        <div id="errorMessage" class="error-message" role="alert">
+            <span id="errorText"></span>
+        </div>
+
+        <div class="status-info">
+            <strong>Last Updated:</strong> <span id="lastUpdate">Never</span>
+        </div>
+
+        <button 
+            id="toggleBtn" 
+            class="power-btn" 
+            aria-label="Toggle system power"
+            aria-pressed="false"
+            title="Press to toggle system"
+        >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path>
+                <line x1="12" y1="2" x2="12" y2="12"></line>
+            </svg>
+        </button>
+
+        <div class="logs" role="log" aria-label="System logs">
+            <div id="logContainer">
+                <div class="log-entry info">> System ready for input.</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== STATE MANAGEMENT =====
+        let isSystemOn = false;
+        let isLoading = false;
+        const MAX_LOGS = 5;
+        const logs = [];
+
+        // ===== INITIALIZATION =====
+        window.addEventListener('load', () => {
+            loadStateFromStorage();
+            addLog('System initialized', 'info');
+        });
+
+        // ===== LOCAL STORAGE =====
+        function saveStateToStorage() {
+            localStorage.setItem('farmWatchmanState', JSON.stringify({
+                isOn: isSystemOn,
+                lastUpdate: new Date().toISOString(),
+                logs: logs
+            }));
+        }
+
+        function loadStateFromStorage() {
+            const stored = localStorage.getItem('farmWatchmanState');
+            if (stored) {
+                try {
+                    const data = JSON.parse(stored);
+                    isSystemOn = data.isOn;
+                    logs.push(...data.logs);
+                    updateUI();
+                    renderLogs();
+                } catch (e) {
+                    console.error('Failed to load stored state:', e);
+                }
+            }
+        }
+
+        // ===== LOGGING SYSTEM =====
+        function addLog(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = {
+                timestamp,
+                message,
+                type,
+                date: new Date().toISOString()
+            };
+            
+            logs.unshift(logEntry);
+            if (logs.length > MAX_LOGS) {
+                logs.pop();
+            }
+            
+            renderLogs();
+            saveStateToStorage();
+        }
+
+        function renderLogs() {
+            const logContainer = document.getElementById('logContainer');
+            logContainer.innerHTML = '';
+            
+            logs.forEach(log => {
+                const entry = document.createElement('div');
+                entry.className = `log-entry ${log.type}`;
+                entry.textContent = `> [${log.timestamp}] ${log.message}`;
+                logContainer.appendChild(entry);
+            });
+        }
+
+        // ===== UI UPDATES =====
+        function updateUI() {
+            const btn = document.getElementById('toggleBtn');
+            const badge = document.getElementById('statusBadge');
+            const text = document.getElementById('statusText');
+            const lastUpdate = document.getElementById('lastUpdate');
+
+            lastUpdate.textContent = new Date().toLocaleTimeString();
+
+            if (isSystemOn) {
+                btn.classList.add('active');
+                btn.setAttribute('aria-pressed', 'true');
+                badge.className = 'status-badge on';
+                text.innerText = 'WATCHMAN ACTIVE';
+            } else {
+                btn.classList.remove('active');
+                btn.setAttribute('aria-pressed', 'false');
+                badge.className = 'status-badge off';
+                text.innerText = 'SYSTEM STANDBY';
+            }
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            const errorText = document.getElementById('errorText');
+            errorText.textContent = message;
+            errorDiv.classList.add('show');
+            
+            setTimeout(() => {
+                errorDiv.classList.remove('show');
+            }, 5000);
+        }
+
+        function setButtonLoading(loading) {
+            const btn = document.getElementById('toggleBtn');
+            isLoading = loading;
+            btn.disabled = loading;
+        }
+
+        // ===== SYSTEM TOGGLE =====
+        async function toggleSystem() {
+            if (isLoading) return;
+
+            const newState = !isSystemOn;
+            const stateText = newState ? 'ON' : 'OFF';
+
+            setButtonLoading(true);
+
+            try {
+                // Call backend API
+                await sendStateToBackend(stateText);
+                
+                isSystemOn = newState;
+                updateUI();
+                addLog(`System ${stateText === 'ON' ? 'armed' : 'disarmed'}. Power ${stateText} sequence sent.`, 'success');
+                
+            } catch (error) {
+                console.error('Failed to toggle system:', error);
+                showError(`Failed to toggle system: ${error.message}`);
+                addLog(`Error: Failed to toggle system`, 'error');
+            } finally {
+                setButtonLoading(false);
+            }
+        }
+
+        // ===== BACKEND COMMUNICATION =====
+        async function sendStateToBackend(state) {
+            // Uncomment and configure for your backend
+            
+            // Example 1: Query parameter
+            // const response = await fetch('/api/watchman?state=' + state, {
+            //     method: 'GET'
+            // });
+
+            // Example 2: POST with JSON
+            // const response = await fetch('/api/watchman', {
+            //     method: 'POST',
+            //     headers: { 'Content-Type': 'application/json' },
+            //     body: JSON.stringify({ state: state })
+            // });
+
+            // Example 3: Simulated backend response (for testing)
+            return new Promise((resolve, reject) => {
+                setTimeout(() => {
+                    if (Math.random() > 0.95) { // 5% failure rate for testing
+                        reject(new Error('Backend communication failed'));
+                    } else {
+                        resolve({ success: true, state: state });
+                    }
+                }, 500);
+            });
+
+            // if (!response.ok) {
+            //     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            // }
+            // return await response.json();
+        }
+
+        // ===== EVENT LISTENERS =====
+        document.getElementById('toggleBtn').addEventListener('click', toggleSystem);
+        
+        // Keyboard accessibility
+        document.getElementById('toggleBtn').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                toggleSystem();
+            }
+        });
+
+        // Page visibility - pause updates when tab is hidden
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) {
+                addLog('System resumed', 'info');
+            }
+        });
+    </script>
+</body>
+</html>
