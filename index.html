@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Farm Watchman Control</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        body {
+            background-color: #0f172a;
+            color: #f8fafc;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .card {
+            background-color: #1e293b;
+            border-radius: 20px;
+            padding: 30px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            border: 1px solid #334155;
+        }
+
+        .header {
+            margin-bottom: 25px;
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            color: #f1f5f9;
+            margin-bottom: 6px;
+        }
+
+        .header p {
+            font-size: 0.875rem;
+            color: #94a3b8;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 50px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 35px;
+            transition: all 0.3s ease;
+        }
+
+        .status-badge.off {
+            background-color: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .status-badge.on {
+            background-color: rgba(34, 197, 94, 0.15);
+            color: #22c55e;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: currentColor;
+        }
+
+        .status-badge.on .dot {
+            box-shadow: 0 0 8px currentColor;
+        }
+
+        /* Power Toggle Button */
+        .power-btn {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            outline: none;
+            margin: 0 auto 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #334155;
+            color: #64748b;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.4), 0 4px 10px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
+        }
+
+        .power-btn svg {
+            width: 50px;
+            height: 50px;
+            stroke-width: 2.5;
+            transition: all 0.3s ease;
+        }
+
+        .power-btn.active {
+            background-color: #22c55e;
+            color: #ffffff;
+            box-shadow: 0 0 25px rgba(34, 197, 94, 0.5);
+        }
+
+        .logs {
+            background-color: #0f172a;
+            border-radius: 10px;
+            padding: 12px;
+            font-family: monospace;
+            font-size: 0.75rem;
+            color: #64748b;
+            text-align: left;
+            border: 1px solid #1e293b;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <div class="header">
+            <h1>Farm Watchman</h1>
+            <p>Automated Perimeter Control</p>
+        </div>
+
+        <div id="statusBadge" class="status-badge off">
+            <span class="dot"></span>
+            <span id="statusText">SYSTEM STANDBY</span>
+        </div>
+
+        <button id="toggleBtn" class="power-btn" onclick="toggleSystem()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path>
+                <line x1="12" y1="2" x2="12" y2="12"></line>
+            </svg>
+        </button>
+
+        <div class="logs">
+            <div id="logMessage">> Ready for input.</div>
+        </div>
+    </div>
+
+    <script>
+        let isSystemOn = false;
+
+        function toggleSystem() {
+            const btn = document.getElementById('toggleBtn');
+            const badge = document.getElementById('statusBadge');
+            const text = document.getElementById('statusText');
+            const log = document.getElementById('logMessage');
+            
+            const timestamp = new Date().toLocaleTimeString();
+
+            isSystemOn = !isSystemOn;
+
+            if (isSystemOn) {
+                btn.classList.add('active');
+                badge.className = 'status-badge on';
+                text.innerText = 'WATCHMAN ACTIVE';
+                log.innerText = `> [${timestamp}] System armed. Power ON sequence sent.`;
+
+                // Example placeholder to trigger real hardware backend (ESP32/Arduino/Raspberry Pi):
+                // fetch('/api/watchman?state=ON');
+            } else {
+                btn.classList.remove('active');
+                badge.className = 'status-badge off';
+                text.innerText = 'SYSTEM STANDBY';
+                log.innerText = `> [${timestamp}] System disarmed. Power OFF sequence sent.`;
+
+                // Example placeholder to trigger real hardware backend:
+                // fetch('/api/watchman?state=OFF');
+            }
+        }
+    </script>
+</body>
+</html>
